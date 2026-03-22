@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Horta no Quintal – Simulação</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h2 { margin-top: 30px; }
+    table { border-collapse: collapse; margin-bottom: 20px; }
+    th, td {
+      border: 1px solid #555;
+      padding: 6px 10px;
+      text-align: center;
+    }
+    th { background: #f0f0f0; }
+    input {
+      width: 80px;
+      text-align: right;
+      border: none;
+      outline: none;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      align-items: flex-start;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      background: #fafafa;
+    }
+    .note {
+      font-size: 0.9rem;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Projeto: Crescimento da Horta no Quintal</h1>
+  <p>
+    Preencha as tabelas abaixo com o número de tomateiros em cada mês,
+    <strong>sem limite de espaço</strong> e <strong>com limite de espaço S = 15</strong>.
+    Depois, clique em <strong>“Desenhar gráficos”</strong> para visualizar as curvas.
+  </p>
+
+  <div class="container">
+    <!-- Tabela SEM limite -->
+    <div>
+      <h2>Tabela 1 – Crescimento <em>sem</em> limite de espaço</h2>
+      <p class="note">Use a regra: mês seguinte = mês atual × 1,2 (20% de crescimento).</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Mês</th>
+            <th>Nº de tomateiros (sem S)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>0</td><td><input id="sem_0" type="number" step="0.01" value="10" /></td></tr>
+          <tr><td>1</td><td><input id="sem_1" type="number" step="0.01" /></td></tr>
+          <tr><td>2</td><td><input id="sem_2" type="number" step="0.01" /></td></tr>
+          <tr><td>3</td><td><input id="sem_3" type="number" step="0.01" /></td></tr>
+          <tr><td>4</td><td><input id="sem_4" type="number" step="0.01" /></td></tr>
+          <tr><td>5</td><td><input id="sem_5" type="number" step="0.01" /></td></tr>
+          <tr><td>6</td><td><input id="sem_6" type="number" step="0.01" /></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Tabela COM limite -->
+    <div>
+      <h2>Tabela 2 – Crescimento <em>com</em> limite de espaço (S = 15)</h2>
+      <p class="note">
+        Use a mesma regra de crescimento, mas se o valor ultrapassar 15,
+        ajuste para 15 (as plantas extras “não cabem”).
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Mês</th>
+            <th>Nº de tomateiros (com S = 15)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>0</td><td><input id="com_0" type="number" step="0.01" value="10" /></td></tr>
+          <tr><td>1</td><td><input id="com_1" type="number" step="0.01" /></td></tr>
+          <tr><td>2</td><td><input id="com_2" type="number" step="0.01" /></td></tr>
+          <tr><td>3</td><td><input id="com_3" type="number" step="0.01" /></td></tr>
+          <tr><td>4</td><td><input id="com_4" type="number" step="0.01" /></td></tr>
+          <tr><td>5</td><td><input id="com_5" type="number" step="0.01" /></td></tr>
+          <tr><td>6</td><td><input id="com_6" type="number" step="0.01" /></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <button onclick="desenharGraficos()">Desenhar gráficos</button>
+
+  <h2>Gráfico – Comparação do crescimento</h2>
+  <p class="note">
+    Linha azul: sem limite de espaço. Linha vermelha: com limite S = 15.
+  </p>
+  <canvas id="grafico" width="700" height="400"></canvas>
+
+  <script>
+    function desenharGraficos() {
+      const meses = [0, 1, 2, 3, 4, 5, 6];
+
+      const sem = meses.map(m => {
+        const el = document.getElementById('sem_' + m);
+        return el && el.value !== '' ? parseFloat(el.value) : null;
+      });
+
+      const comS = meses.map(m => {
+        const el = document.getElementById('com_' + m);
+        return el && el.value !== '' ? parseFloat(el.value) : null;
+      });
+
+      const canvas = document.getElementById('grafico');
+      const ctx = canvas.getContext('2d');
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const padding = 50;
+      const w = canvas.width - 2 * padding;
+      const h = canvas.height - 2 * padding;
+
+      const maxY = Math.max(
+        30,
+        ...sem.filter(v => v !== null),
+        ...comS.filter(v => v !== null)
+      );
+
+      // Eixos
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padding, padding);
+      ctx.lineTo(padding, padding + h);
+      ctx.lineTo(padding + w, padding + h);
+      ctx.stroke();
+
+      // Marcas no eixo Y
+      ctx.fillStyle = '#000';
+      ctx.font = '12px Arial';
+      const stepsY = 6;
+      for (let i = 0; i <= stepsY; i++) {
+        const yVal = (maxY / stepsY) * i;
+        const y = padding + h - (yVal / maxY) * h;
+        ctx.beginPath();
+        ctx.moveTo(padding - 5, y);
+        ctx.lineTo(padding + 5, y);
+        ctx.stroke();
+        ctx.fillText(yVal.toFixed(0), 10, y + 4);
+      }
+
+      // Marcas no eixo X
+      const stepX = w / (meses.length - 1);
+      for (let i = 0; i < meses.length; i++) {
+        const x = padding + i * stepX;
+        const y = padding + h;
+        ctx.beginPath();
+        ctx.moveTo(x, y - 5);
+        ctx.lineTo(x, y + 5);
+        ctx.stroke();
+        ctx.fillText(meses[i], x - 3, y + 20);
+      }
+
+      function plotSerie(data, color) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        data.forEach((val, i) => {
+          if (val === null || isNaN(val)) return;
+          const x = padding + i * stepX;
+          const y = padding + h - (val / maxY) * h;
+          if (i === 0 || data[i - 1] === null || isNaN(data[i - 1])) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        });
+        ctx.stroke();
+      }
+
+      // Sem limite (azul)
+      plotSerie(sem, '#007bff');
+      // Com limite (vermelho)
+      plotSerie(comS, '#ff0000');
+    }
+  </script>
+
+</body>
+</html>
